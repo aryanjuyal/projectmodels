@@ -1,11 +1,11 @@
 # ml_api/recommendation.py
-
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+# 💡 Lighter embedding model (~200 MB)
+model = SentenceTransformer("sentence-transformers/paraphrase-MiniLM-L3-v2")
 
 def build_user_profiles(users_df, posts_df, interactions_df):
     post_embeddings = model.encode(posts_df["content"].tolist(), convert_to_numpy=True)
@@ -19,6 +19,7 @@ def build_user_profiles(users_df, posts_df, interactions_df):
         post_ids = user_interactions["post_id"].tolist()
         user_vectors = post_embeddings[[pid - 1 for pid in post_ids]]
         user_profiles[user_id] = np.mean(user_vectors, axis=0)
+
     return user_profiles, post_embeddings
 
 
@@ -30,6 +31,7 @@ def recommend_posts(user_id, users_df, posts_df, interactions_df, top_k=3):
 
     sims = cosine_similarity([user_vec], post_embeddings)[0]
     seen = interactions_df[interactions_df["user_id"] == user_id]["post_id"].tolist()
+
     recommendations = [
         (pid + 1, score)
         for pid, score in enumerate(sims)
@@ -37,4 +39,5 @@ def recommend_posts(user_id, users_df, posts_df, interactions_df, top_k=3):
     ]
     recommendations.sort(key=lambda x: x[1], reverse=True)
     top_posts = recommendations[:top_k]
+
     return posts_df[posts_df["id"].isin([p[0] for p in top_posts])][["id", "content"]].to_dict(orient="records")
