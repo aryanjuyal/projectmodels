@@ -1,15 +1,14 @@
-# ml_api/main.py
-
+import os
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Dict
 from ml_api.recommendation import recommend_posts
 from ml_api.moderation import analyze_post
 import pandas as pd
+import uvicorn
 
 app = FastAPI(title="College Community ML API")
 
-# Schemas for incoming requests
 class PostInput(BaseModel):
     text: str
 
@@ -25,8 +24,7 @@ def root():
 
 @app.post("/moderate-post/")
 def moderate_post(input: PostInput):
-    result = analyze_post(input.text)
-    return result
+    return analyze_post(input.text)
 
 @app.post("/recommend-posts/")
 def get_recommendations(data: RecommendationInput):
@@ -35,3 +33,7 @@ def get_recommendations(data: RecommendationInput):
     interactions_df = pd.DataFrame(data.interactions)
     recs = recommend_posts(data.user_id, users_df, posts_df, interactions_df)
     return {"user_id": data.user_id, "recommendations": recs}
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("ml_api.main:app", host="0.0.0.0", port=port)
