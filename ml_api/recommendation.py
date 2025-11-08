@@ -1,10 +1,10 @@
-# ml_api/recommendation.py
+
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# 💡 Lighter embedding model (~200 MB)
+
 model = SentenceTransformer("sentence-transformers/paraphrase-MiniLM-L3-v2")
 
 def build_user_profiles(users_df, posts_df, interactions_df):
